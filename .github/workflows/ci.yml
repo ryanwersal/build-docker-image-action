@@ -45,5 +45,12 @@ jobs:
       - name: Validate Action
         uses: ./
         with:
-          dockerfile: e2e/Dockerfile
+          registry: docker.pkg.github.com
+          namespace: ${{ github.repository }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           context: e2e
+          dockerfile: e2e/Dockerfile
+          image: example
+          tag: latest
+          target: runtime

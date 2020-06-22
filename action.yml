@@ -2,11 +2,34 @@ name: Build Docker Image
 description: Build Docker images using staging based caching
 author: Ryan Wersal
 inputs:
+  registry:
+    description: URL of registry to push image to
+    default: docker.pkg.github.com
+    required: true
+  namespace:
+    description: Namespace off the registry
+    required: true
+  username:
+    description: Username of specified registry (defaults to github.actor)
+    required: true
+  password:
+    description: Password of user for specified registry (defaults to GITHUB_TOKEN)
+    required: true
   context:
-    description: Path to context of build
+    description: Path to context of build (defaults to working directory)
     required: false
   dockerfile:
     description: Path to Dockerfile
+    required: false
+  image:
+    description: Name of the built image
+    required: true
+  tag:
+    description: Tag to give to built image (defaults to latest)
+    default: latest
+    required: true
+  target:
+    description: Stage to target
     required: false
 runs:
   using: node12
