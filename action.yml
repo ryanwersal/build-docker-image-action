@@ -7,13 +7,13 @@ inputs:
     default: docker.pkg.github.com
     required: true
   namespace:
-    description: Namespace off the registry
-    required: true
+    description: Namespace off the registry (defaults to GITHUB_REPOSITORY)
+    required: false
   username:
-    description: Username of specified registry (defaults to github.actor)
-    required: true
+    description: Username of specified registry (defaults to GITHUB_ACTOR)
+    required: false
   password:
-    description: Password of user for specified registry (defaults to GITHUB_TOKEN)
+    description: Password of user for specified registry
     required: true
   context:
     description: Path to context of build (defaults to working directory)

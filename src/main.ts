@@ -6,7 +6,7 @@ interface BuildImageContext {
   tag: string;
   target?: string;
   dockerfilePath?: string;
-  contextPath?: string;
+  contextPath: string;
 }
 
 const buildImage = async ({
@@ -37,11 +37,7 @@ const buildImage = async ({
     args.push("--target", target);
   }
 
-  if (contextPath) {
-    args.push(contextPath);
-  } else {
-    args.push(".");
-  }
+  args.push(contextPath);
 
   await exec("docker", args, { env });
 
@@ -122,13 +118,13 @@ const run = async () => {
   const registry = core.getInput("registry", { required: true });
 
   try {
-    core.info(JSON.stringify(process.env));
-
-    const namespace = core.getInput("namespace", { required: true });
-    const username = core.getInput("username", { required: true });
+    const namespace =
+      core.getInput("namespace") || process.env.GITHUB_REPOSITORY || "";
+    const username =
+      core.getInput("username") || process.env.GITHUB_ACTOR || "";
     const password = core.getInput("password", { required: true });
     const dockerfilePath = core.getInput("dockerfile");
-    const contextPath = core.getInput("context");
+    const contextPath = core.getInput("context") || ".";
     const image = core.getInput("image", { required: true });
     const tag = core.getInput("tag", { required: true });
     const target = core.getInput("target");
