@@ -1021,12 +1021,7 @@ const buildImage = ({ image, tag, target, dockerfilePath, contextPath, }) => __a
     if (target) {
         args.push("--target", target);
     }
-    if (contextPath) {
-        args.push(contextPath);
-    }
-    else {
-        args.push(".");
-    }
+    args.push(contextPath);
     yield exec_1.exec("docker", args, { env });
     return imageName;
 });
@@ -1063,12 +1058,11 @@ const pushImage = ({ registryImageName }) => __awaiter(void 0, void 0, void 0, f
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const registry = core.getInput("registry", { required: true });
     try {
-        core.info(JSON.stringify(process.env));
-        const namespace = core.getInput("namespace", { required: true });
-        const username = core.getInput("username", { required: true });
+        const namespace = core.getInput("namespace") || process.env.GITHUB_REPOSITORY || "";
+        const username = core.getInput("username") || process.env.GITHUB_ACTOR || "";
         const password = core.getInput("password", { required: true });
         const dockerfilePath = core.getInput("dockerfile");
-        const contextPath = core.getInput("context");
+        const contextPath = core.getInput("context") || ".";
         const image = core.getInput("image", { required: true });
         const tag = core.getInput("tag", { required: true });
         const target = core.getInput("target");
