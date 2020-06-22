@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "12"
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check
+        run: yarn run format-check
+
+      - name: Lint
+        run: yarn run lint
+
+      - name: Build
+        run: yarn run build
+
+      - name: Test
+        run: yarn run test
+
+      - name: Pack
+        run: yarn run pack
+
+      - name: Validate Action
+        uses: ./
+        with:
+          dockerfile: e2e/Dockerfile
+          context: e2e

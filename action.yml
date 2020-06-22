@@ -1,0 +1,13 @@
+name: Build Docker Image
+description: Build Docker images using staging based caching
+author: Ryan Wersal
+inputs:
+  context:
+    description: Path to context of build
+    required: false
+  dockerfile:
+    description: Path to Dockerfile
+    required: false
+runs:
+  using: node12
+  main: dist/index.js

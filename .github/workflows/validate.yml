@@ -1,0 +1,24 @@
+name: Validate
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  validate:
+    name: Validate ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate
+        uses: ./
+        with:
+          dockerfile: e2e/Dockerfile
+          context: e2e
