@@ -6,6 +6,7 @@ interface BuildImageContext {
   tag: string;
   previousImages?: string[];
   target?: string;
+  registryImagePrefix?: string;
   dockerfilePath?: string;
   contextPath: string;
 }
@@ -15,6 +16,7 @@ const buildImage = async ({
   tag,
   previousImages = [],
   target,
+  registryImagePrefix,
   dockerfilePath,
   contextPath,
 }: BuildImageContext) => {
@@ -45,6 +47,8 @@ const buildImage = async ({
     [] as string[]
   );
   args.push(...cacheFroms);
+
+  args.push("--cache-from", `${registryImagePrefix}/${imageName}`);
 
   args.push(contextPath);
 
@@ -146,11 +150,14 @@ const run = async () => {
     const previousImages = [];
     const allTargets = cachedStages.concat([target]);
     for (const currentTarget of allTargets) {
+      const registryImagePrefix = `${registry}/${namespace}`;
+
       const imageName: string = await buildImage({
         image,
         tag,
         previousImages,
         target: currentTarget,
+        registryImagePrefix,
         dockerfilePath,
         contextPath,
       });

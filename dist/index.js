@@ -1003,7 +1003,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec_1 = __webpack_require__(986);
-const buildImage = ({ image, tag, previousImages = [], target, dockerfilePath, contextPath, }) => __awaiter(void 0, void 0, void 0, function* () {
+const buildImage = ({ image, tag, previousImages = [], target, registryImagePrefix, dockerfilePath, contextPath, }) => __awaiter(void 0, void 0, void 0, function* () {
     const env = {
         DOCKER_BUILDKIT: "1",
     };
@@ -1023,6 +1023,7 @@ const buildImage = ({ image, tag, previousImages = [], target, dockerfilePath, c
     }
     const cacheFroms = previousImages.reduce((result, img) => [...result, "--cache-from", img], []);
     args.push(...cacheFroms);
+    args.push("--cache-from", `${registryImagePrefix}/${imageName}`);
     args.push(contextPath);
     yield exec_1.exec("docker", args, { env });
     return imageName;
@@ -1074,11 +1075,13 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         const previousImages = [];
         const allTargets = cachedStages.concat([target]);
         for (const currentTarget of allTargets) {
+            const registryImagePrefix = `${registry}/${namespace}`;
             const imageName = yield buildImage({
                 image,
                 tag,
                 previousImages,
                 target: currentTarget,
+                registryImagePrefix,
                 dockerfilePath,
                 contextPath,
             });
