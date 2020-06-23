@@ -51,4 +51,5 @@ jobs:
           dockerfile: e2e/Dockerfile
           image: example
           tag: latest
+          cached-stages: base,build,runtime
           target: runtime

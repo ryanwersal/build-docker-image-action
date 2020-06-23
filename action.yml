@@ -28,6 +28,9 @@ inputs:
     description: Tag to give to built image (defaults to latest)
     default: latest
     required: true
+  cached-stages:
+    description: Comma delimited list of stages to push/cache
+    required: false
   target:
     description: Stage to target
     required: false
