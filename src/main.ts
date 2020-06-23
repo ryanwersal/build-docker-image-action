@@ -4,6 +4,7 @@ import { exec } from "@actions/exec";
 interface BuildImageContext {
   image: string;
   tag: string;
+  previousImages?: string[];
   target?: string;
   dockerfilePath?: string;
   contextPath: string;
@@ -12,6 +13,7 @@ interface BuildImageContext {
 const buildImage = async ({
   image,
   tag,
+  previousImages = [],
   target,
   dockerfilePath,
   contextPath,
@@ -20,7 +22,7 @@ const buildImage = async ({
     DOCKER_BUILDKIT: "1",
   };
 
-  const imageName = `${image}:${tag}`;
+  const imageName = `${image}-${target}:${tag}`;
 
   const args = [
     "build",
@@ -29,6 +31,7 @@ const buildImage = async ({
     "--build-arg",
     "BUILDKIT_INLINE_CACHE=1",
   ];
+
   if (dockerfilePath) {
     args.push("--file", dockerfilePath);
   }
@@ -36,6 +39,12 @@ const buildImage = async ({
   if (target) {
     args.push("--target", target);
   }
+
+  const cacheFroms = previousImages.reduce(
+    (result, img) => [...result, "--cache-from", img],
+    [] as string[]
+  );
+  args.push(...cacheFroms);
 
   args.push(contextPath);
 
@@ -127,29 +136,37 @@ const run = async () => {
     const contextPath = core.getInput("context") || ".";
     const image = core.getInput("image", { required: true });
     const tag = core.getInput("tag", { required: true });
+    const cachedStages = core.getInput("cached-stages").split(",") || [];
     const target = core.getInput("target");
 
     core.setSecret(password);
 
     await loginToRegistry({ registry, username, password });
 
-    const imageName = await buildImage({
-      image,
-      tag,
-      target,
-      dockerfilePath,
-      contextPath,
-    });
+    const previousImages = [];
+    const allTargets = cachedStages.concat([target]);
+    for (const currentTarget of allTargets) {
+      const imageName: string = await buildImage({
+        image,
+        tag,
+        previousImages,
+        target: currentTarget,
+        dockerfilePath,
+        contextPath,
+      });
 
-    const registryImageName = await tagImage({
-      imageName,
-      registry,
-      namespace,
-    });
+      const registryImageName: string = await tagImage({
+        imageName,
+        registry,
+        namespace,
+      });
 
-    await pushImage({
-      registryImageName,
-    });
+      await pushImage({
+        registryImageName,
+      });
+
+      previousImages.push(registryImageName);
+    }
   } catch (error) {
     core.setFailed(error.message);
   } finally {

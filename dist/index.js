@@ -1003,11 +1003,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec_1 = __webpack_require__(986);
-const buildImage = ({ image, tag, target, dockerfilePath, contextPath, }) => __awaiter(void 0, void 0, void 0, function* () {
+const buildImage = ({ image, tag, previousImages = [], target, dockerfilePath, contextPath, }) => __awaiter(void 0, void 0, void 0, function* () {
     const env = {
         DOCKER_BUILDKIT: "1",
     };
-    const imageName = `${image}:${tag}`;
+    const imageName = `${image}-${target}:${tag}`;
     const args = [
         "build",
         "--tag",
@@ -1021,6 +1021,8 @@ const buildImage = ({ image, tag, target, dockerfilePath, contextPath, }) => __a
     if (target) {
         args.push("--target", target);
     }
+    const cacheFroms = previousImages.reduce((result, img) => [...result, "--cache-from", img], []);
+    args.push(...cacheFroms);
     args.push(contextPath);
     yield exec_1.exec("docker", args, { env });
     return imageName;
@@ -1065,24 +1067,31 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         const contextPath = core.getInput("context") || ".";
         const image = core.getInput("image", { required: true });
         const tag = core.getInput("tag", { required: true });
+        const cachedStages = core.getInput("cached-stages").split(",") || [];
         const target = core.getInput("target");
         core.setSecret(password);
         yield loginToRegistry({ registry, username, password });
-        const imageName = yield buildImage({
-            image,
-            tag,
-            target,
-            dockerfilePath,
-            contextPath,
-        });
-        const registryImageName = yield tagImage({
-            imageName,
-            registry,
-            namespace,
-        });
-        yield pushImage({
-            registryImageName,
-        });
+        const previousImages = [];
+        const allTargets = cachedStages.concat([target]);
+        for (const currentTarget of allTargets) {
+            const imageName = yield buildImage({
+                image,
+                tag,
+                previousImages,
+                target: currentTarget,
+                dockerfilePath,
+                contextPath,
+            });
+            const registryImageName = yield tagImage({
+                imageName,
+                registry,
+                namespace,
+            });
+            yield pushImage({
+                registryImageName,
+            });
+            previousImages.push(registryImageName);
+        }
     }
     catch (error) {
         core.setFailed(error.message);
